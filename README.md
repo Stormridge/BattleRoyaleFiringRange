@@ -6,8 +6,8 @@ The BR Firing Range is a place to practice with BR weapons, armor, and damage mo
 
 I'm putting this code in github so others can modify the weapons lists and keep it up to date!  When needed, I will publish to Steam.
 
-Released under Arma Public License. https://www.bistudio.com/community/licenses/arma-public-license
-![APL](https://www.bistudio.com/assets/img/licenses/APL.png)
+Released under Arma Public License - SA. ![APL-SA](https://www.bistudio.com/assets/img/licenses/APL-SA.png) 
+https://www.bistudio.com/community/licenses/arma-public-license-share-alike
 
 
 ## Overview
