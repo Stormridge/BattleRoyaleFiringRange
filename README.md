@@ -1,4 +1,4 @@
-# BattleRoyaleFiringRange
+# Battle Royale Firing Range
 Originally by Majarkin, updated by Stormridge in 2016/2017
 
 The BR Firing Range is a place to practice with BR weapons, armor, and damage models.  The Firing Range is also a great place to test out new code within a sandbox environment.
@@ -6,7 +6,7 @@ The BR Firing Range is a place to practice with BR weapons, armor, and damage mo
 I'm putting this code in github so others can modify the weapons lists and keep it up to date!  When needed, I will publish to Steam.
 
 Released under Arma Public License. https://www.bistudio.com/community/licenses/arma-public-license
-
+(https://www.bistudio.com/assets/img/licenses/APL.png)
 
 ## Overview
 Don't look at this code if you want to learn SQF, and how to do things correctly.  However, it can get you started in understanding how missions are put together.
