@@ -1,0 +1,48 @@
+/*
+	
+	Description: Central mission setup
+	Created By: Majarkin, Nutyyyy
+	Updated By: Stormridge
+	
+*/
+#include "Includes\defines.hpp"
+#include "Resources\rsc_base.hpp"
+#include "Resources\dialogs.hpp"
+
+author = "Majarkin, Nutyyyy, and Stormridge";
+onLoadName = "BR Firing Range";
+onloadmission = "Weapons testing for PlayerUnknown's Battle Royale!";
+
+doneKeys[] = {"stormridge_BRFR"};
+
+class Header
+{
+	gameType = DM;
+	minPlayers = 1;
+	maxPlayers = 32;
+};
+
+respawn = "BASE";
+respawndelay = 3;
+
+disableChannels[]={0,1,2,6}; //Disable Global, Side, Command, and System chat
+
+enableDebugConsole = 2; //Enable debug consule for everyone
+
+joinUnassigned = 0;  //Auto Assign free playable slot in mission lobby
+
+disabledAI = true; //Disable AI Automatically
+
+corpseLimit = 10; //Corpse Limit and removal times
+corpseRemovalMinTime = 10;
+corpseRemovalMaxTime = 60;
+
+//wreckLimit = 5; //Wreck Limit and removal times
+wreckRemovalMinTime = 60;
+wreckRemovalMaxTime = 300;
+
+saving = 0; //Disable saving
+
+respawnButton = 1; //Enable Respawn Button
+briefing = 0;
+debriefing = 0;
