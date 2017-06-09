@@ -6,8 +6,8 @@ The BR Firing Range is a place to practice with BR weapons, armor, and damage mo
 I'm putting this code in github so others can modify the weapons lists and keep it up to date!  When needed, I will publish to Steam.
 
 Released under Arma Public License. https://www.bistudio.com/community/licenses/arma-public-license
-[logo]: https://www.bistudio.com/assets/img/licenses/APL.png "APL"
-![logo]
+![APL](https://www.bistudio.com/assets/img/licenses/APL.png)
+
 
 ## Overview
 Don't look at this code if you want to learn SQF, and how to do things correctly.  However, it can get you started in understanding how missions are put together.
