@@ -1,5 +1,6 @@
 # Battle Royale Firing Range
 Originally by Majarkin, updated by Stormridge in 2016/2017
+Visit our [Battle Royale Discord](https://discord.gg/0VyanbPZ8SsaJU5p)
 
 The BR Firing Range is a place to practice with BR weapons, armor, and damage models.  The Firing Range is also a great place to test out new code within a sandbox environment.
 
