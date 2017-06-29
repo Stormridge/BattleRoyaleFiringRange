@@ -11,294 +11,428 @@
 if (isNil "BRFR_Globals_defined") then 
 {
 	BRFR_Globals_defined = true;
-	//diag_log "==== GLOBAL VARIABLES DEFINED. This should occur only once. ====";
+	// ["HitFace","HitNeck","HitHead","HitPelvis","HitAbdomen","HitDiaphragm","HitChest","HitBody","HitArms","HitHands","HitLegs"],
 
 
 
-// ["HitFace","HitNeck","HitHead","HitPelvis","HitAbdomen","HitDiaphragm","HitChest","HitBody","HitArms","HitHands","HitLegs"],
-
-//####################################################
-// Stormridge's custom damage model for Arma3 BR
-//   This is hacked into the Firing Range, and not
-//		guaranteed to be what I'm running in BR LIVE.
-//####################################################
-
-player addEventHandler ["HandleDamage", {_this call BR_DamageHandler} ];
-
-br_oneShotProtectionTimespan = 1.0;
-br_lastOneShotTime = 0;
-br_lastExplosionTime = 0;
-br_lastMassiveHit = 0;
-br_lastBulletTime = 0;
-br_thisBulletOverallDamage = 0;
-br_thisBulletStartingHealth = 0;
-
-BR_DamageHandler =
-{ 
-	private ["_isFuelExplosion", "_dmgDelta", "_isSniper" ,"_resultValue","_priorDamageValue","_knownProjectileModifier","_dmgMultiplierHead","_dmgMultiplierNeck","_dmgMultiplierBody","_dmgMultiplierHands","_dmgMultiplierLegs","_dmgMultiplierOverall","_isExplosiveRound"];
-	
-	params [
-	    "_unit",
-	    "_selection",
-	    "_engineProposedDamageValue",
-	    "_source", 
-	    "_projectile",
-	    "_hitPartIndex",
-	    "_instigator"
+	//####################################################
+	// Stormridge's custom damage model for Arma3 BR
+	//   This is hacked into the Firing Range, and not
+	//		guaranteed to be what I'm running in BR LIVE.
+	//####################################################
+	//####################################################
+	// Variables
+	//####################################################
+	////////// HELMETS
+	BR_GEAR_HELMET_TIER5 = [
+		"H_HelmetLeaderO_ocamo",	//Defender Helmet (Hex)
+        "H_HelmetLeaderO_oucamo" 	//Defender Helmet (Urban)
 	];
+	BR_GEAR_HELMET_TIER4 = [
+		"H_HelmetSpecB_blk",    //Enhanced Combat Helmet (Black)
+		"H_HelmetSpecB_paint2", //Enhanced Combat Helmet (Desert)
+		"H_HelmetSpecO_blk" 	//Assassin Helmet
+	];
+	BR_GEAR_HELMET_TIER3 = [
+		"H_HelmetCrew_B",   		//Crew Helmet (NATO
+		"H_HelmetCrew_I", 			// AAF
+		"H_PilotHelmetFighter_I"	//Pilot
+	];
+	BR_GEAR_HELMET_TIER2 = [
+		"H_HelmetB_paint",      //Combat Helmet (Spraypaint)
+		"H_HelmetIA_net",       //MICH (Camo)
+		"H_HelmetB_camo",       //Combat helmet (Camo)          
+		"H_CrewHelmetHeli_B", 	// Heli Crew Helmet
+		"H_CrewHelmetHeli_O" 	// Heli Crew Helmet
+	];
+	BR_GEAR_HELMET_TIER1 = [ ];
+	////////// VESTS
+	BR_GEAR_VEST_TIER45 = [
+		"V_PlateCarrierSpec_rgr",	//Carrier Special Rig (Green)
+		"V_PlateCarrierSpec_blk"	//Carrier Special Rig (Black)
+	];
+	BR_GEAR_VEST_TIER3 = [
+		"V_PlateCarrier1_blk",		//Carrier Lite (Black)  
+        "V_PlateCarrierIA1_dgtl",   //GA Carrier Lite (Digi)
+        "V_PlateCarrierL_CTRG"		//CTRG Plate Carrier Rik Mk.1 [Light]
+	];
+	BR_GEAR_VEST_TIER2 = [
+        "V_TacVest_blk_POLICE",	//Tactical Vest (Police)
+        "V_Press_F"				//Vest (Press)
+	];
+	BR_GEAR_VEST_TIER1 = [
+		"V_TacVestIR_blk",      //Raven Vest
+	    "V_TacVest_oli",        //Tactical Vest (Olive)
+        "V_TacVest_blk",        //Tactical Vest (Black)
+        "V_TacVest_brn",		//Tactical Vest (Brown)
+        "V_TacVestCamo_khk",    //Camouflaged Vest
+        "V_TacVest_camo",       //Tactical Vest (Camo)
+        "V_TacVest_khk",        //Tactical Vest (Khaki)
+		"V_RebreatherB"   		//Rebreather [NATO]
+    ];
+	BR_GEAR_VEST_TIER0_NOTCHECKED = [
+		"V_Chestrig_blk",       //Fighter Chestrig (Black)
+        "V_HarnessO_brn",       //LBV Harness
+        "V_HarnessOSpec_brn",	//ELBV Harness
+        "V_HarnessOGL_brn",     //LBV Grenadier Harness
+        "V_BandollierB_blk",    //Slash Bandolier (Black)
+        "V_BandollierB_oli"     //Slash Bandolier (Olive)
+	];
+	////////// AMMO
+	BR_AMMO_ROUND_TYPE_EXPLOSIVE_CFGTYPES = ["FuelExplosion",
+												"G_40mm_HEDP",
+												"G_40mm_HE",
+												"mini_Grenade",
+												"GrenadeHand",
+												"APERSMine_Range_Ammo",
+												"APERSBoundingMine_Range_Ammo",
+												"APERSTripMine_Wire_Ammo",
+												"CUP_PipeBomb_Ammo",
+												"ClaymoreDirectionalMine_Remote_Ammo",
+												"SLAMDirectionalMine_Wire_Ammo",
+												"CUP_R_PG7VR_AT"
+	];
+	BR_AMMO_ROUND_TYPE_SNIPER_CFGTYPES = ["B_127x108_APDS",
+											"B_127x108_Ball",
+											"CUP_B_86x70_Ball_noTracer", 		// Lapua
+											"CUP_B_762x54_Ball_White_Tracer", 	// SVD
+											"CUP_B_127x108_Ball_Green_Tracer"	// KSVK
+	];
+	BR_AMMO_ROUND_TYPE_762_CFGTYPES = ["CUP_B_303_Ball", 						//Lee
+										"CUP_B_762x51_noTracer",				// LMG
+										"CUP_B_762x51_Tracer_Yellow",			// LMG
+										"CUP_B_762x51_Tracer_Red",				// LMG
+										"CUP_B_762x54_Ball_Green_Tracer",		// PKM, UK59
+										"B_762x51_Ball", 						// CZ805, FAL, MK17 and others
+										"CUP_B_762x39_Ball_Tracer_Green", 		// SA58, AKM, AKS
+										"CUP_B_762x39_Ball" 					// SA58, AKM, AKS
+	];
+	BR_AMMO_ROUND_TYPE_655_CFGTYPES = ["CUP_B_93x64_Ball", 			 			// Hunting
+										"B_65x39_Caseless_green", 				// Katiba, MX
+										"B_65x39_Caseless"
+	];
+	BR_AMMO_ROUND_TYPE_556_CFGTYPES = ["B_556x45_Ball",				 		// 556 Stanag
+										"B_556x45_Ball_Tracer_Red",			// 556 Stanag Tracer
+										"FHQ_B_556x45_Ball_Tracer_IR",		// 556 Tracer IR
+										"B_556x45_dual",					// 556 Under Water
+										"CUP_B_545x39_Ball",				// AK
+										"CUP_B_545x39_Ball_Tracer_White" 	// AK White Tracer
+	];
+	BR_AMMO_ROUND_TYPE_SMG_CFGTYPES = [ "CUP_B_9x18_Ball",				// Bizon
+										"CUP_B_9x19_Ball",				// Uzi, MP5, Evo
+										"B_45ACP_Ball",					// SMG 1 Vermin, some pistols
+										"B_45ACP_Ball_Green",			// SMG 1 Green
+										"B_9x21_Ball"					// SMGs and pistols (Scorpion, PDW, Sting, Protector)
+	];
+	BR_AMMO_ROUND_TYPE_SHOTGUN_CFGTYPES = ["CUP_B_12Gauge_Pellets"];
 
-	_priorDamageValue = 0; 
-	_resultValue = 0;
-	_knownProjectileModifier= 1.0;
+	BR_ENUM_AMMO_ROUND_TYPE_EXPLOSIVE = 0;
+	BR_ENUM_AMMO_ROUND_TYPE_SNIPER = 1;
+	BR_ENUM_AMMO_ROUND_TYPE_762 = 2;
+	BR_ENUM_AMMO_ROUND_TYPE_655 = 3;
+	BR_ENUM_AMMO_ROUND_TYPE_556 = 4;
+	BR_ENUM_AMMO_ROUND_TYPE_SMG = 5;
+	BR_ENUM_AMMO_ROUND_TYPE_SHOTGUN = 6;
+	BR_ENUM_AMMO_ROUND_TYPE_EMPTY = 7;
 
-	_dmgMultiplierHead = .7; 
-	_dmgMultiplierNeck = .5;
-	_dmgMultiplierBody = 1.1;
-	_dmgMultiplierHands = .5;
-	_dmgMultiplierLegs = .225;
-	_dmgMultiplierOverall = 0.75;
-	_maxOverallDamagePerBullet = 0.25;
+	BR_ENUM_HITBOX_HEAD = 0;
+	BR_ENUM_HITBOX_BODY = 1;
+	BR_ENUM_HITBOX_LEGS = 2;
+	BR_ENUM_HITBOX_OVERALL = 3;
 
-	_isExplosiveRound = false;
-	_isSniper = false;
-	_isFuelExplosion = false;
+	BR_HITBOX_HEAD_HITPART_REFERENCES = [0,1,2];
+	BR_HITBOX_BODY_HITPART_REFERENCES = [3,4,5,6,7,8,9,11];
+	BR_HITBOX_LEGS_HITPART_REFERENCES = [10];
+	BR_HITBOX_SPECIAL_HITPART_REFERENCES = [-1];
 
-	switch (_projectile) do
+	BR_PLAYER_HIT_EVENT_TRACKER = "BRHITEVENT1";
+
+	BR_DMG_BULLET_SEPARATION_MIN_TIME = .12;	// Arma can't keep up with lower values
+
+	br_lastHitEventTickTime = 0;
+	/*---------------------------------------------------------------------------
+	STRM: Look up ammo types based on projectile.
+	---------------------------------------------------------------------------*/
+	BR_DamageHandler_AmmoTypeLookup = 
 	{
-		// 6.55
-		case "B_65x39_Caseless_green":
+		if (_this in BR_AMMO_ROUND_TYPE_556_CFGTYPES) exitWith {BR_ENUM_AMMO_ROUND_TYPE_556};
+		if (_this in BR_AMMO_ROUND_TYPE_655_CFGTYPES) exitWith {BR_ENUM_AMMO_ROUND_TYPE_655};
+		if (_this in BR_AMMO_ROUND_TYPE_SMG_CFGTYPES) exitWith {BR_ENUM_AMMO_ROUND_TYPE_SMG};
+		if (_this in BR_AMMO_ROUND_TYPE_762_CFGTYPES) exitWith {BR_ENUM_AMMO_ROUND_TYPE_762};
+		if (_this in BR_AMMO_ROUND_TYPE_SNIPER_CFGTYPES) exitWith {BR_ENUM_AMMO_ROUND_TYPE_SNIPER};
+		if (_this in BR_AMMO_ROUND_TYPE_EXPLOSIVE_CFGTYPES) exitWith {BR_ENUM_AMMO_ROUND_TYPE_EXPLOSIVE};
+		if (_this in BR_AMMO_ROUND_TYPE_SHOTGUN_CFGTYPES) exitWith {BR_ENUM_AMMO_ROUND_TYPE_SHOTGUN};
+		BR_ENUM_AMMO_ROUND_TYPE_EMPTY
+	};
+	/*---------------------------------------------------------------------------
+	STRM: Determine which hitbox was affected by this bullet.
+	---------------------------------------------------------------------------*/
+	BR_DamageHandler_HitBoxLookup = 
+	{
+		if (_this in BR_HITBOX_HEAD_HITPART_REFERENCES) exitWith {BR_ENUM_HITBOX_HEAD};
+		if (_this in BR_HITBOX_BODY_HITPART_REFERENCES) exitWith {BR_ENUM_HITBOX_BODY};
+		if (_this in BR_HITBOX_LEGS_HITPART_REFERENCES) exitWith {BR_ENUM_HITBOX_LEGS};
+		if (_this in BR_HITBOX_SPECIAL_HITPART_REFERENCES) exitWith {BR_ENUM_HITBOX_OVERALL};
+		BR_ENUM_HITBOX_BODY
+	};
+	/*---------------------------------------------------------------------------
+	STRM: Get hitbox string name
+	---------------------------------------------------------------------------*/
+	BR_DamageHandler_GetHitBoxNameStringFromIndex = 
+	{
+		switch (_this) do 
 		{
-			_maxOverallDamagePerBullet = .35;
-			_knownProjectileModifier = 1;
-		};
-		case "B_65x39_Caseless":
-		{
-			_maxOverallDamagePerBullet = .35;
-			_knownProjectileModifier = 1;
-		};
-		// 7.62
-		case "CUP_B_762x51_noTracer":
-		{
-			_maxOverallDamagePerBullet = .49;
-			_knownProjectileModifier = 1;
-		};
-		case "CUP_B_762x51_Tracer_Yellow":
-		{
-			_maxOverallDamagePerBullet = .49;
-			_knownProjectileModifier = 1;
-		};
-		case "B_762x51_Ball":
-		{
-			_maxOverallDamagePerBullet = .49;
-			_knownProjectileModifier = 1;
-		};
-		case "CUP_B_762x39_Ball_Tracer_Green":
-		{
-			_maxOverallDamagePerBullet = .49;
-			_knownProjectileModifier = 1;
-		};
-		case "CUP_B_762x39_Ball":
-		{
-			_maxOverallDamagePerBullet = .49;
-			_knownProjectileModifier = 1;
-		};		
-		// Sniper Ammo
-		case "CUP_B_86x70_Ball_noTracer":
-		{
-			_isSniper = true;
-		};
-		case "CUP_B_762x54_Ball_White_Tracer":
-		{
-			_isSniper = true;
-		};
-		case "CUP_B_127x108_Ball_Green_Tracer":
-		{
-			_isSniper = true;
-		};
-		case "FuelExplosion":
-		{
-			_dmgMultiplierOverall = 100;
-			_isFuelExplosion = true;
-		};
-		case "G_40mm_HEDP":
-		{
-			_knownProjectileModifier = .35;
-			_isExplosiveRound = true;
-		};
-		case "G_40mm_HE":
-		{
-			_knownProjectileModifier = .5;
-			_isExplosiveRound = true;
-		};
-		case "mini_Grenade":
-		{
-			_isExplosiveRound = true;
-		};
-		case "APERSMine_Range_Ammo":
-		{
-			_isExplosiveRound = true;
-		};
-		case "APERSBoundingMine_Range_Ammo":
-		{
-			_isExplosiveRound = true;
-		};
-		case "APERSTripMine_Wire_Ammo":
-		{
-			_isExplosiveRound = true;
-		};
-		case "CUP_PipeBomb_Ammo":
-		{
-			_isExplosiveRound = true;
-		};
-		case "ClaymoreDirectionalMine_Remote_Ammo":
-		{
-			_isExplosiveRound = true;
-		};
-		case "SLAMDirectionalMine_Wire_Ammo":
-		{
-			_isExplosiveRound = true;
-		};
-		case "CUP_R_PG7VR_AT":
-		{
-			_isExplosiveRound = true;
-		};
-		case "CUP_B_12Gauge_Pellets":
-		{
-			_knownProjectileModifier = .5; _dmgMultiplierHead = .1; _dmgMultiplierNeck=.1; _dmgMultiplierLegs=.1; _dmgMultiplierHands=.1;
+			case 0 : { "head" };
+			case 1 : { "body" };
+			case 2 : { "legs" };
+			case 3 : { "core body" };
+			default { "unknown" };
 		};
 	};
-	if (_isExplosiveRound) then 
+	/*---------------------------------------------------------------------------
+	STRM: Get ammo generic name
+	---------------------------------------------------------------------------*/
+	BR_DamageHandler_GetAmmoGenericName = 
 	{
-		if (diag_tickTime - br_lastExplosionTime > 5) then
+		switch (_this) do 
 		{
-			if !(isNull _instigator) then
-			{
-				br_lastExplosionTime = diag_tickTime;
-				player setVariable ["br_recentExplosiveHitAmmo", _projectile, true];
-				player setVariable ["br_recentExplosiveHitOwnerNetId", netid _instigator, true];
-				[] spawn
+			case BR_ENUM_AMMO_ROUND_TYPE_556 : { "assault rifle ammo" };
+			case BR_ENUM_AMMO_ROUND_TYPE_655 : { "6.55mm ammo" };
+			case BR_ENUM_AMMO_ROUND_TYPE_SMG : { "Small arms ammo" };
+			case BR_ENUM_AMMO_ROUND_TYPE_762 :  { "large caliber ammo" };
+			case BR_ENUM_AMMO_ROUND_TYPE_SNIPER :  { "sniper ammo" };
+			case BR_ENUM_AMMO_ROUND_TYPE_EXPLOSIVE :  { "explosion" };
+			case BR_ENUM_AMMO_ROUND_TYPE_SHOTGUN :  { "shutgun pellets" };
+			case BR_ENUM_AMMO_ROUND_TYPE_EMPTY : { "the environment" };
+			default { "unknown" };
+		};
+	};
+	/*---------------------------------------------------------------------------
+	STRM: Get damage reduction from helmet
+	---------------------------------------------------------------------------*/
+	BR_DamageHandler_GetHelmetDmgReduction =
+	{
+		private _hg = headgear _this; // .001ms - optimize
+		if (_hg in BR_GEAR_HELMET_TIER5) exitWith {.7};
+		if (_hg in BR_GEAR_HELMET_TIER4) exitWith {.6};
+		if (_hg in BR_GEAR_HELMET_TIER3) exitWith {.4};
+		if (_hg in BR_GEAR_HELMET_TIER2) exitWith {.2};
+		0
+	};
+	/*---------------------------------------------------------------------------
+	STRM: Get damage reduction from Vest
+	---------------------------------------------------------------------------*/
+	BR_DamageHandler_GetVestDmgReduction =
+	{
+		private _hg = vest _this; // .001ms - optimize
+		if (_hg in BR_GEAR_VEST_TIER45) exitWith {.65};
+		if (_hg in BR_GEAR_VEST_TIER3) exitWith {.5};
+		if (_hg in BR_GEAR_VEST_TIER2) exitWith {.35};
+		if (_hg in BR_GEAR_VEST_TIER1) exitWith {.2};
+		0
+	};
+	BR_ENUM_AMMO_ROUND_TYPE_BASEDAMAGE_VALUES = [ 	// Must match ENUM above.  Value of hit against unarmored player, to CHEST.
+		0, 		// Explosive, NOT USED.
+		100,	// Sniper
+		3, 		// 762
+		1,		// 655
+		.8,		// 556
+		.5,		// SMG
+		3,		// SHOTGUN @ short range, but must fall off
+		0		// Environment, NOT USED.
+	];
+	BR_HEAD_DAMAGE_MULTIPLIER = 2;
+	/*---------------------------------------------------------------------------
+	STRM: Apply base damage to a hitbox
+	---------------------------------------------------------------------------*/
+	BR_DamageHandler_ApplyRawDamageToHitbox = 
+	{
+		params [
+			"_unit",
+			"_hitboxIndex",
+			"_projectileBaseDamageAmount",
+			"_instigator"
+		];
+		private _resultDamageTotalDone = 0;
+		private _armorDmgReductionPercent = 0;
+
+		switch (_hitboxIndex) do 
+		{
+			case BR_ENUM_HITBOX_HEAD :
 				{
-					sleep 4;
-					player setVariable ["br_recentExplosiveHitAmmo", "", true];
+					_resultDamageTotalDone = BR_HEAD_DAMAGE_MULTIPLIER * _projectileBaseDamageAmount * ( 1 - ( _unit call BR_DamageHandler_GetHelmetDmgReduction ) );
 				};
-			};
-		};
-	};
-	switch (_hitPartIndex) do
-	{ 
-		case 0:
-		{
-			_priorDamageValue = _unit getHitIndex 0; // Face
-			_resultValue = _priorDamageValue + ((_engineProposedDamageValue - _priorDamageValue) * _dmgMultiplierHead * _knownProjectileModifier);
-		};
-		case 1:
-		{
-			_priorDamageValue = _unit getHitIndex 1; // Neck
-			_resultValue = _priorDamageValue + ((_engineProposedDamageValue - _priorDamageValue) * _dmgMultiplierNeck * _knownProjectileModifier);
-		}; 			
-		case 2:
-		{
-			_priorDamageValue = _unit getHitIndex 2; // Head
-			_resultValue = _priorDamageValue + ((_engineProposedDamageValue - _priorDamageValue) * _dmgMultiplierHead * _knownProjectileModifier); 
-		};
-		case 3:
-		{
-			_priorDamageValue = _unit getHitIndex 3; // Pelvis
-			_resultValue = _priorDamageValue + ((_engineProposedDamageValue - _priorDamageValue) * _dmgMultiplierBody * _knownProjectileModifier); 
-		}; 
-		case 4:
-		{
-			_priorDamageValue = _unit getHitIndex 4; //spine1
-			_resultValue = _priorDamageValue + ((_engineProposedDamageValue - _priorDamageValue) * _dmgMultiplierBody * _knownProjectileModifier); 
-		};  
-		case 5:
-		{
-			_priorDamageValue = _unit getHitIndex 5; //spine2
-			_resultValue = _priorDamageValue + ((_engineProposedDamageValue - _priorDamageValue) * _dmgMultiplierBody * _knownProjectileModifier); 
-		};  
-		case 6:
-		{
-			_priorDamageValue = _unit getHitIndex 6;	//spine3
-			_resultValue = _priorDamageValue + ((_engineProposedDamageValue - _priorDamageValue) * _dmgMultiplierBody * _knownProjectileModifier); 
-		};			
-		case 7:
-		{
-			_priorDamageValue = _unit getHitIndex 7; // Body
-			_resultValue = _priorDamageValue + ((_engineProposedDamageValue - _priorDamageValue) * _dmgMultiplierBody * _knownProjectileModifier); 
-		}; 
-		case 8:
-		{
-			_priorDamageValue = _unit getHitIndex 8; // Arms
-			_resultValue = _priorDamageValue + ((_engineProposedDamageValue - _priorDamageValue) * _dmgMultiplierHands * _knownProjectileModifier); 
-		};  
-		case 9:
-		{
-			_priorDamageValue = _unit getHitIndex 9; // Hands
-			_resultValue = _priorDamageValue + ((_engineProposedDamageValue - _priorDamageValue) * _dmgMultiplierHands * _knownProjectileModifier); 
-		}; 
-		case 10:
-		{
-			_priorDamageValue = _unit getHitIndex 10; // Legs
-			_resultValue = _priorDamageValue + ((_engineProposedDamageValue - _priorDamageValue) * _dmgMultiplierLegs * _knownProjectileModifier); 
-		}; 
-		case -1:
-		{
-			_priorDamageValue = damage _unit;		
-
-			// If sniper ammo, you dead.
-			if (_isSniper) then
-			{
-				_resultValue = _priorDamageValue + ((_engineProposedDamageValue - _priorDamageValue) * _dmgMultiplierOverall);
-			} 
-			else
-			{
-
-				_overallMultiplierForThisHit = _dmgMultiplierOverall;
-
-				if (diag_tickTime - br_lastBulletTime < 0.1) then
+			case BR_ENUM_HITBOX_BODY :
 				{
-					_resultValue = _priorDamageValue + ((_engineProposedDamageValue - _priorDamageValue) * _overallMultiplierForThisHit * _knownProjectileModifier);
-					
-					_dmgDelta = abs (_resultValue - _priorDamageValue);
+					_resultDamageTotalDone = _projectileBaseDamageAmount * ( 1 - ( _unit call BR_DamageHandler_GetVestDmgReduction ) );
+				};
+			case BR_ENUM_HITBOX_LEGS :
+				{
+					_resultDamageTotalDone = _projectileBaseDamageAmount * ( 1 - (( _unit call BR_DamageHandler_GetVestDmgReduction ) * .5) );	// Vest affects legs by 50%
+				};
+			case BR_ENUM_HITBOX_OVERALL :
+				{
+					_resultDamageTotalDone = _projectileBaseDamageAmount * ( 1 - (( _unit call BR_DamageHandler_GetVestDmgReduction ) * .5) );
+				};
+			default
+				{
+					_resultDamageTotalDone = _projectileBaseDamageAmount;
+				};
+		};
+		_resultDamageTotalDone
+	};
+	/*---------------------------------------------------------------------------
+	STRM: Apply damage to a BR HitBox
+	---------------------------------------------------------------------------*/
+	BR_DamageHandler_ApplyHitBoxDamage = 
+	{
+		params [
+			"_unit",
+			"_instigator", // Can be objNull:CarCrash|CoreBody, FallDamage|Body
+		    "_hitbox",
+		    "_projectile",
+		    "_engineProposedDamageValue"
+		];
+		private _resultDamageTotalDone = 0; // How much dmg bullet did to player
+		private _currentHealth = damage _unit;
 
-					if (br_thisBulletOverallDamage + _dmgDelta >= _maxOverallDamagePerBullet && !_isFuelExplosion) then
-					{
-						br_thisBulletOverallDamage = _maxOverallDamagePerBullet;
-						_resultValue = br_thisBulletStartingHealth + br_thisBulletOverallDamage;
-					}
-					else
-					{
-						br_thisBulletOverallDamage = br_thisBulletOverallDamage + _resultValue;
-						_resultValue = br_thisBulletStartingHealth + br_thisBulletOverallDamage;
-					};
+		// DEBUG ONLY
+		private _hitboxStringName = _hitbox call BR_DamageHandler_GetHitBoxNameStringFromIndex;
+		diag_log format["[HIT_BOX_DAMAGE] _hitbox=%1 	name=%2 	_projectile=%3 	", _hitbox, _hitboxStringName, _projectile];
+
+		private _ammoType = _projectile call BR_DamageHandler_AmmoTypeLookup;
+
+		// DEBUG ONLY
+		private _ammoTypeGenericName = (_ammoType call BR_DamageHandler_GetAmmoGenericName);
+		diag_log format["[HIT_BOX_DAMAGE] _ammoType=%1 	_ammoTypeGenericName=%2", _ammoType,_ammoTypeGenericName];
+		systemChat format["%1 hit target in %2 from %3m with %4", name (vehicle _instigator), _hitboxStringName, _instigator distance _unit, _ammoTypeGenericName];
+
+		switch (_ammoType) do 
+		{ 
+			case BR_ENUM_AMMO_ROUND_TYPE_EXPLOSIVE : // player additem "minigrenade"; 
+				{
+					_resultDamageTotalDone = _engineProposedDamageValue;
+				};
+			case BR_ENUM_AMMO_ROUND_TYPE_SHOTGUN :
+				{
+					private _distanceToShooter = _unit distance _instigator;
+					private _shotgunDamage = 0;
+					if (_distanceToShooter < 7) then { _shotgunDamage = 1; };
+					if (_distanceToShooter >= 7 && _distanceToShooter < 14) then { _shotgunDamage = ( 1 - ( .5 * (_unit call BR_DamageHandler_GetVestDmgReduction) ) ); };
+					if (_distanceToShooter >= 14) then { _shotgunDamage = ( 1 - (( _unit call BR_DamageHandler_GetVestDmgReduction ) * .8) ); };
+					_resultDamageTotalDone = _shotgunDamage;
+				};
+			case BR_ENUM_AMMO_ROUND_TYPE_EMPTY :
+				{
+					_resultDamageTotalDone = _engineProposedDamageValue;
+				};
+			default 
+				{
+					_resultDamageTotalDone = [_unit, _hitbox, BR_ENUM_AMMO_ROUND_TYPE_BASEDAMAGE_VALUES select _ammoType, _instigator] call BR_DamageHandler_ApplyRawDamageToHitbox;
+				}; 
+		};
+
+		_currentHealth = _currentHealth + _resultDamageTotalDone;
+
+		_unit setDamage _currentHealth;
+
+		systemChat format["You did %1 damage to target.", _resultDamageTotalDone];
+		diag_log format["	[RESULT RESULT RESULT]  IMPACT casued damage = %1", _resultDamageTotalDone];
+		diag_log format["	[RESULT RESULT RESULT]  IMPACT casued damage = %1", _resultDamageTotalDone];
+		diag_log format["	[RESULT RESULT RESULT]  IMPACT casued damage = %1", _resultDamageTotalDone];
+	};
+	//####################################################
+	// Event Definition
+	//####################################################
+	player addEventHandler ["HandleDamage", {_this call BR_DamageHandler} ];
+
+	BR_DamageHandler =
+	{ 
+
+		params [
+		    "_unit",						// 0
+		    "_selection",					// 1
+		    "_engineProposedDamageValue",	// 2
+		    "_source", 						// 3
+		    "_projectile",					// 4
+		    "_hitPartIndex",				// 5
+		    "_instigator",					// 6
+		    "_hitPointCfgName"				// 7
+		];
+
+		private _resultHitBoxHealthValue = damage _unit;
+
+		diag_log format["[TIME ME] %1 - %2", diag_tickTime, _this];
+		diag_log format["[HIT_POINT] TIME:%8 		hitSel: %1 	engineProposedDmg: %2 	source: %3 	proj: %4 	hitPartIndex: %5 	inst: %6 	point: %7 	unit: %9", _selection, _engineProposedDamageValue, _source, _projectile, _hitPartIndex, _instigator, _hitPointCfgName, diag_tickTime, _unit];
+		diag_log format["	[HIT_POINT_CURVE]  	DIST_SOURCE: %1", _unit distance _source];
+		diag_log format["	[HIT_POINT_CURVE]  	DIST_INSTIG: %1", _unit distance _instigator];
+
+		// First impact?
+		if (diag_tickTime - br_lastHitEventTickTime > BR_DMG_BULLET_SEPARATION_MIN_TIME) then 
+		{
+			diag_log "	**************************************************************";
+			diag_log "	[BULLET DETECTED]";
+			diag_log "	[BULLET DETECTED]";
+			diag_log "	[BULLET DETECTED]";
+			diag_log "	**************************************************************";
+
+			br_lastHitEventTickTime = diag_tickTime;
+
+			_unit setVariable [BR_PLAYER_HIT_EVENT_TRACKER, [_engineProposedDamageValue, _instigator, _this] ];
+
+			_unit spawn
+			{
+				private _unit = _this;
+				diag_log format["	[HIT_FIRST] Started at %1", diag_tickTime];
+
+				uiSleep BR_DMG_BULLET_SEPARATION_MIN_TIME;
+
+				private _largestDamageEntry = _unit getVariable [BR_PLAYER_HIT_EVENT_TRACKER, []];
+
+				diag_log "	**************************************************************";
+				diag_log format["	[HIT_APPLY] Started at %1, with biggest hit %2", diag_tickTime, _largestDamageEntry];
+
+				if (count _largestDamageEntry > 0) then 
+				{
+					[_unit, _largestDamageEntry select 1, ((_largestDamageEntry select 2) select 5) call BR_DamageHandler_HitBoxLookup, (_largestDamageEntry select 2) select 4, _largestDamageEntry select 0] call BR_DamageHandler_ApplyHitBoxDamage;
 				}
 				else
 				{
-					br_lastBulletTime = diag_tickTime;
-					br_thisBulletOverallDamage = 0;
-					br_thisBulletStartingHealth = _priorDamageValue;
-
-					_resultValue = _priorDamageValue + ((_engineProposedDamageValue - _priorDamageValue) * _overallMultiplierForThisHit * _knownProjectileModifier);
-
-					_dmgDelta = abs (_priorDamageValue - _resultValue);
-
-					if (_dmgDelta > _maxOverallDamagePerBullet) then
-					{
-						_resultValue = _priorDamageValue + _maxOverallDamagePerBullet;
-					} 
-					else
-					{
-					};
-					br_thisBulletOverallDamage = 0 + _resultValue;
+					diag_log "	[HIT_APPLY] ERROR. BR_PLAYER_HIT_EVENT_TRACKER was empty!";
 				};
 			};
-		};
-		default{ };
-	};
-	//diag_log format["[HIT] Selection:%1 			Index:%2 	Proposed:%3 	Result:%4 	Projectile:%5 	Instigator:%6", _selection, _hitPartIndex, _engineProposedDamageValue, _resultValue,_projectile,_instigator];
-	_resultValue
-};
+		}
+		else
+		{
+			diag_log "	[2nd IMPACT DETECTED]";
 
+			private _largestDamageEntry = _unit getVariable [BR_PLAYER_HIT_EVENT_TRACKER, []];
+
+			if (count _largestDamageEntry < 1) then 
+			{
+				diag_log "ERROR ERROR ERROR ERROR ERROR ERROR : _largestDamageEntry is empty!";
+			} 
+			else
+			{
+				_biggestDmgValueSoFar = _largestDamageEntry select 0;
+				_instigatorSoFar = _largestDamageEntry select 1;
+
+				if (_biggestDmgValueSoFar < _engineProposedDamageValue) then 
+				{
+					_largestDamageEntry set [0, _engineProposedDamageValue];
+					_largestDamageEntry set [2, _this];
+				};
+				// Update instigator, since Bohemia can't do it right.
+				if (isNull _instigatorSoFar) then 
+				{
+					_largestDamageEntry set [1, _instigator];
+				};
+			};
+			// What if 2 players?  We dont care.
+		};
+		_resultHitBoxHealthValue
+	};
+	/////////////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -817,4 +951,7 @@ BR_DamageHandler =
 		"BAF_Offroad_D", "BAF_Offroad_W", "LandRover_CZ_EP1", "LandRover_ACR", "LandRover_TK_CIV_EP1"
 
 	];
+
+
 };
+
