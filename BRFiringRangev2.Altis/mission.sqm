@@ -5083,6 +5083,7 @@ class Mission
 						skill=0.60000002;
 						lock="UNLOCKED";
 						name="ScenarioPlayer2";
+						init="this addEventHandler ['Fired',{_mag = _this select 5;_unit = _this select 0;if ({_x isEqualTo _mag} count magazines _unit < 2) then{_unit addMagazines [_mag, 3];};}];";
 						isPlayer=1;
 						isPlayable=1;
 					};
