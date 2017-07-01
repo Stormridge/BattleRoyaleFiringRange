@@ -1,10 +1,3 @@
-/*
-	
-	Description: Central mission setup
-	Created By: Majarkin, Nutyyyy
-	Updated By: Stormridge
-	
-*/
 #include "Includes\defines.hpp"
 #include "Resources\rsc_base.hpp"
 #include "Resources\dialogs.hpp"

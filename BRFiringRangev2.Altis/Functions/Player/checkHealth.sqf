@@ -11,13 +11,13 @@ private ["_unit", "_health", "_head", "_body", "_legs", "_hands", "_pelvis", "_n
 // Added by Stormridge so we always have good data...
 BRFR_GetHealthStats = {
 	private _result = format["Health = %1\n", ceil((1 - (damage _this)) * 100)];
-	_allHitPtsDmgArray = getAllHitPointsDamage _this;
-	if ((count _allHitPtsDmgArray) > 0) then 
-	{
-		{
-			_result = _result + format["%1 = %2\n",([(_allHitPtsDmgArray select 0) select _forEachIndex, 3] call BIS_fnc_trimString), if (_x>0) then {_x} else {0}];
-		} foreach (_allHitPtsDmgArray select 2);
-	};
+	// _allHitPtsDmgArray = getAllHitPointsDamage _this;
+	// if ((count _allHitPtsDmgArray) > 0) then 
+	// {
+	// 	{
+	// 		_result = _result + format["%1 = %2\n",([(_allHitPtsDmgArray select 0) select _forEachIndex, 3] call BIS_fnc_trimString), if (_x>0) then {_x} else {0}];
+	// 	} foreach (_allHitPtsDmgArray select 2);
+	// };
 	_result = _result + format["Speed = %1 km/h\n", floor (speed _this)];
 	_result
 };
