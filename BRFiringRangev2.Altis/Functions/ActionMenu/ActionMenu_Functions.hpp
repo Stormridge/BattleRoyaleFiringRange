@@ -14,7 +14,7 @@ BRFR_Temp_CreateCarWithOccupant = {
 
 	_newVehicle = _vehClass createVehicle _pos;
 
-	_newVehicle setVariable[PLAYER_MADE,true,true];		// Do this so it doesn't get cleaned up.
+	_newVehicle setVariable["PLAYER_MADE",true,true];		// Do this so it doesn't get cleaned up.
 
 	_group = createGroup WEST;
 	_unit = _group createUnit ["B_BattleRoyalePlayer_F", [random 100,random 100,0], [], 0, "CAN_COLLIDE"];
