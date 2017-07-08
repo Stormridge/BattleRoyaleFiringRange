@@ -157,7 +157,7 @@ if (isNil "BRFR_Globals_defined") then
 	BR_PLAYER_HIT_LAST_IMPACT = "BRHITLAST";
 	BR_PLAYER_HIT_LAST_IMPACT_KILLEDME = "BRHITLAST_KILL";
 
-	BR_DMG_BULLET_SEPARATION_MIN_TIME = .12;	// Arma can't keep up with lower values
+	BR_DMG_BULLET_SEPARATION_MIN_TIME = .08;	// Arma can't keep up with lower values
 
 	br_lastHitEventTickTime = 0;
 	/*---------------------------------------------------------------------------
@@ -168,8 +168,8 @@ if (isNil "BRFR_Globals_defined") then
 		if (_this in BR_AMMO_ROUND_TYPE_556_CFGTYPES) exitWith {BR_ENUM_AMMO_ROUND_TYPE_556};
 		if (_this in BR_AMMO_ROUND_TYPE_655_CFGTYPES) exitWith {BR_ENUM_AMMO_ROUND_TYPE_655};
 		if (_this in BR_AMMO_ROUND_TYPE_SMG_CFGTYPES) exitWith {BR_ENUM_AMMO_ROUND_TYPE_SMG};
-		if (_this in BR_AMMO_ROUND_TYPE_762_CFGTYPES) exitWith {BR_ENUM_AMMO_ROUND_TYPE_762};
 		if (_this in BR_AMMO_ROUND_TYPE_SNIPER_CFGTYPES) exitWith {BR_ENUM_AMMO_ROUND_TYPE_SNIPER};
+		if (_this in BR_AMMO_ROUND_TYPE_762_CFGTYPES) exitWith {BR_ENUM_AMMO_ROUND_TYPE_762};
 		if (_this in BR_AMMO_ROUND_TYPE_EXPLOSIVE_CFGTYPES) exitWith {BR_ENUM_AMMO_ROUND_TYPE_EXPLOSIVE};
 		if (_this in BR_AMMO_ROUND_TYPE_SHOTGUN_CFGTYPES) exitWith {BR_ENUM_AMMO_ROUND_TYPE_SHOTGUN};
 		BR_ENUM_AMMO_ROUND_TYPE_EMPTY
@@ -217,6 +217,31 @@ if (isNil "BRFR_Globals_defined") then
 			default { "unknown" };
 		};
 	};
+	/*---------------------------------------------------------------------------
+	STRM: Gets helmet tier - pass in player object
+	---------------------------------------------------------------------------*/
+	BR_DamageHandler_GetHelmetTier = 
+	{
+		private _hg = headgear _this;
+		if (_hg in BR_GEAR_HELMET_TIER5) exitWith {5};
+		if (_hg in BR_GEAR_HELMET_TIER4) exitWith {4};
+		if (_hg in BR_GEAR_HELMET_TIER3) exitWith {3};
+		if (_hg in BR_GEAR_HELMET_TIER2) exitWith {2};
+		if (_hg isEqualTo "") exitWith {0};
+		1
+	};
+	/*---------------------------------------------------------------------------
+	STRM: Gets vest tier - pass in player object
+	---------------------------------------------------------------------------*/
+	BR_DamageHandler_GetVestTier = 
+	{
+		private _vest = vest _this;
+		if (_vest in BR_GEAR_VEST_TIER45) exitWith {5};
+		if (_vest in BR_GEAR_VEST_TIER3) exitWith {3};
+		if (_vest in BR_GEAR_VEST_TIER2) exitWith {2};
+		if (_vest in BR_GEAR_VEST_TIER1) exitWith {1};
+		0
+	};	
 	/*---------------------------------------------------------------------------
 	STRM: Get damage reduction from helmet
 	---------------------------------------------------------------------------*/
@@ -322,14 +347,14 @@ if (isNil "BRFR_Globals_defined") then
 
 		// DEBUG ONLY
 		private _hitboxStringName = _hitbox call BR_DamageHandler_GetHitBoxNameStringFromIndex;
-		diag_log format["[HIT_BOX_DAMAGE] _hitbox=%1 	name=%2 	_projectile=%3 	", _hitbox, _hitboxStringName, _projectile];
+		//diag_log format["[HIT_BOX_DAMAGE] _hitbox=%1 	name=%2 	_projectile=%3 	", _hitbox, _hitboxStringName, _projectile];
 
 		private _ammoType = _projectile call BR_DamageHandler_AmmoTypeLookup;
 
 		// DEBUG ONLY
 		private _ammoTypeGenericName = (_ammoType call BR_DamageHandler_GetAmmoGenericName);
-		diag_log format["[HIT_BOX_DAMAGE] _ammoType=%1 	_ammoTypeGenericName=%2", _ammoType,_ammoTypeGenericName];
-		systemChat format["%1 hit target in %2 from %3m with %4", name (vehicle _instigator), _hitboxStringName, _instigator distance _unit, _ammoTypeGenericName];
+		//diag_log format["[HIT_BOX_DAMAGE] _ammoType=%1 	_ammoTypeGenericName=%2", _ammoType,_ammoTypeGenericName];
+		//systemChat format["%1 hit target in %2 from %3m with %4", name (vehicle _instigator), _hitboxStringName, _instigator distance _unit, _ammoTypeGenericName];
 
 		switch (_ammoType) do 
 		{ 
@@ -360,15 +385,15 @@ if (isNil "BRFR_Globals_defined") then
 
 		_unit setDamage _unitHealthNow;
 
-		if (_unitHealthNow >= .8) then
-		{
-			_unit setHitIndex[9,.3];
-		}
-		else
-		{
+		// if (_unitHealthNow >= .8) then
+		// {
+		// 	_unit setHitIndex[9,.3];
+		// }
+		// else
+		// {
 			_unit setHitIndex[9,0];	 // hands
 			_unit setHitIndex[10,0]; // legs
-		};
+		//};
 
 		if (_unitHealthNow >= 1) then
 		{
@@ -378,7 +403,7 @@ if (isNil "BRFR_Globals_defined") then
 		_unit setVariable [BR_PLAYER_HIT_LAST_IMPACT, [_instigator, _hitbox, _ammoType] ];
 
 		systemChat format["You did %1 damage to target.", _resultDamageTotalDone];
-		diag_log format["	[RESULT RESULT RESULT]  IMPACT caused damage = %1", _resultDamageTotalDone];
+		//diag_log format["	[RESULT RESULT RESULT]  IMPACT caused damage = %1", _resultDamageTotalDone];
 	};
 	//####################################################
 	// Event Definition
@@ -403,9 +428,9 @@ if (isNil "BRFR_Globals_defined") then
 		private _ignoreShot = false;
 
 		//diag_log format["[TIME ME] %1 - %2", diag_tickTime, _this];
-		diag_log format["[HIT_POINT] TIME:%8 		hitSel: %1 	engineProposedDmg: %2 	source: %3 	proj: %4 	hitPartIndex: %5 	inst: %6 	point: %7 	unit: %9", _selection, _engineProposedDamageValue, _source, _projectile, _hitPartIndex, _instigator, _hitPointCfgName, diag_tickTime, _unit];
-		diag_log format["	[HIT_POINT_CURVE]  	DIST_SOURCE: %1", _unit distance _source];
-		diag_log format["	[HIT_POINT_CURVE]  	DIST_INSTIG: %1", _unit distance _instigator];
+		//diag_log format["[HIT_POINT] TIME:%8 		hitSel: %1 	engineProposedDmg: %2 	source: %3 	proj: %4 	hitPartIndex: %5 	inst: %6 	point: %7 	unit: %9", _selection, _engineProposedDamageValue, _source, _projectile, _hitPartIndex, _instigator, _hitPointCfgName, diag_tickTime, _unit];
+		// diag_log format["	[HIT_POINT_CURVE]  	DIST_SOURCE: %1", _unit distance _source];
+		// diag_log format["	[HIT_POINT_CURVE]  	DIST_INSTIG: %1", _unit distance _instigator];
 
 		// First impact?
 		if (diag_tickTime - br_lastHitEventTickTime > BR_DMG_BULLET_SEPARATION_MIN_TIME) then 
@@ -413,31 +438,34 @@ if (isNil "BRFR_Globals_defined") then
 			br_lastHitEventTickTime = diag_tickTime;
 			_unit setVariable [BR_PLAYER_HIT_EVENT_TRACKER, [_engineProposedDamageValue, _instigator, _this] ];
 
-			diag_log "	**************************************************************";
-			diag_log "	[BULLET DETECTED]";
-			diag_log "	[BULLET DETECTED]";
-			diag_log "	[BULLET DETECTED]";
-			diag_log "	**************************************************************";
+			// diag_log "	**************************************************************";
+			// diag_log "	[BULLET DETECTED]";
+			// diag_log "	[BULLET DETECTED]";
+			// diag_log "	[BULLET DETECTED]";
+			// diag_log "	**************************************************************";
 
 			if (_hitPartIndex == -1) then 
 			{
-				if ( !(vehicle _unit isEqualTo _unit) &&
-					!(_instigator isEqualTo objNull)) exitWith {diag_log "[HIT_POINT] IGNORED BODY SHOT - PLAYER IN VEHICLE"; _ignoreShot=true;};
+				if !(vehicle _unit isEqualTo _unit) then 
+				{
+					if (_projectile in BR_AMMO_ROUND_TYPE_762_CFGTYPES ||
+						_projectile in BR_AMMO_ROUND_TYPE_SNIPER_CFGTYPES) exitWith {diag_log "[HIT_POINT] IGNORED BODY SHOT with high cal."; _ignoreShot=true;};
+				};
 			};
-			if (_ignoreShot) exitWith {};
+			if (_ignoreShot) exitWith { br_lastHitEventTickTime = 0; };
 
 			[_unit, _unitHealthNow] spawn
 			{
 				params ["_unit", "_unitHealthNow"];
 
-				diag_log format["	[HIT_FIRST] Started at %1", diag_tickTime];
+				//diag_log format["	[HIT_FIRST] Started at %1", diag_tickTime];
 
 				uiSleep BR_DMG_BULLET_SEPARATION_MIN_TIME;
 
 				private _largestDamageEntry = _unit getVariable [BR_PLAYER_HIT_EVENT_TRACKER, []];
 
-				diag_log "	**************************************************************";
-				diag_log format["	[HIT_APPLY] Started at %1, with biggest hit %2", diag_tickTime, _largestDamageEntry];
+				//diag_log "	**************************************************************";
+				//diag_log format["	[HIT_APPLY] Started at %1, with biggest hit %2", diag_tickTime, _largestDamageEntry];
 
 				if (count _largestDamageEntry > 0) then 
 				{
@@ -445,26 +473,29 @@ if (isNil "BRFR_Globals_defined") then
 				}
 				else
 				{
-					diag_log "	[HIT_APPLY] ERROR ERROR ERROR ERROR ERROR ERROR. BR_PLAYER_HIT_EVENT_TRACKER was empty!";
+					//diag_log "	[HIT_APPLY] ERROR ERROR ERROR ERROR ERROR ERROR. BR_PLAYER_HIT_EVENT_TRACKER was empty!";
 				};
 			};
 		}
 		else
 		{
-			diag_log "	[2nd IMPACT DETECTED]";
+			//diag_log "	[2nd IMPACT DETECTED]";
 
 			if (_hitPartIndex == -1) then 
 			{
-				if ( !(vehicle _unit isEqualTo _unit) &&
-					!(_instigator isEqualTo objNull)) exitWith {diag_log "[HIT_POINT] IGNORED BODY SHOT - PLAYER IN VEHICLE"; _ignoreShot=true;};
+				if !(vehicle _unit isEqualTo _unit) then 
+				{
+					if (_projectile in BR_AMMO_ROUND_TYPE_762_CFGTYPES ||
+						_projectile in BR_AMMO_ROUND_TYPE_SNIPER_CFGTYPES) exitWith {diag_log "[HIT_POINT] IGNORED BODY SHOT with high cal."; _ignoreShot=true;};
+				};
 			};
-			if (_ignoreShot) exitWith {};
+			if (_ignoreShot) exitWith { };
 
 			private _largestDamageEntry = _unit getVariable [BR_PLAYER_HIT_EVENT_TRACKER, []];
 
 			if (count _largestDamageEntry < 1) then 
 			{
-				diag_log "ERROR ERROR ERROR ERROR ERROR ERROR : _largestDamageEntry is empty!";
+				//diag_log "ERROR ERROR ERROR ERROR ERROR ERROR : _largestDamageEntry is empty!";
 			} 
 			else
 			{
@@ -1014,18 +1045,22 @@ if (isNil "BRFR_Globals_defined") then
 	];
 
 	G_CAR_OPTIONS = [
-		"beetle_bleufonce",
-		"C_Hatchback_01_F",
-		"C_Hatchback_01_sport_F",
-		"C_Offroad_01_F",
-		"C_SUV_01_F",
-		"C_Van_01_box_F",
-		"C_Van_01_transport_F",
-		"C_Quadbike_01_F",
-		"I_Truck_02_covered_F",
+	"C_Van_01_box_F",
+	"BAF_Offroad_D",
+	"C_Offroad_01_repair_F",
+	"beetle_bleufonce",
+	"C_Van_01_transport_F"
+		// "C_Hatchback_01_F",
+		// "C_Hatchback_01_sport_F",
+		// "C_Offroad_01_F",
+		// "C_SUV_01_F",
+		// "C_Van_01_box_F",
+		// "C_Van_01_transport_F",
+		// "C_Quadbike_01_F",
+		// "I_Truck_02_covered_F",
 
-		//"B_Boat_Transport_01_F","C_Boat_Civil_01_police_F","C_Boat_Civil_01_F","C_Boat_Civil_01_rescue_F","O_Lifeboat",
-		"BAF_Offroad_D" //, "BAF_Offroad_W", "LandRover_CZ_EP1", "LandRover_ACR", "LandRover_TK_CIV_EP1"
+		// //"B_Boat_Transport_01_F","C_Boat_Civil_01_police_F","C_Boat_Civil_01_F","C_Boat_Civil_01_rescue_F","O_Lifeboat",
+		// "BAF_Offroad_D" //, "BAF_Offroad_W", "LandRover_CZ_EP1", "LandRover_ACR", "LandRover_TK_CIV_EP1"
 
 	];
 
