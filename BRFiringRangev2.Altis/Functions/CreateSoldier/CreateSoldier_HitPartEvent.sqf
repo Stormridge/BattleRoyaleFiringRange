@@ -55,7 +55,7 @@ if (_shooter == player) then {
 
 	// Player feedback
 	_hitText = _hitObjectsArray select 0;
-	systemChat format ["Target hit at %1   (velocity: %2m/s)", _hitText, _speed];
+	//systemChat format ["Target hit at %1   (velocity: %2m/s)", _hitText, _speed];
 
 	// Delay and sound
 	//sleep .5;
