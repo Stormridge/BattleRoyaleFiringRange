@@ -372,20 +372,6 @@ if (isNil "BRFR_Globals_defined") then
 			case BR_ENUM_AMMO_ROUND_TYPE_EXPLOSIVE : // player additem "minigrenade"; 
 				{
 					_resultDamageTotalDone = _engineProposedDamageValue;
-					if (diag_tickTime - br_lastExplosionTime >= 5) then
-					{
-						if !(isNull _instigator) then
-						{
-							br_lastExplosionTime = diag_tickTime;
-							_unit setVariable ["br_recentExplosiveHitAmmo", _projectile, true];
-							_unit setVariable ["br_recentExplosiveHitOwnerNetId", netid _instigator, true];
-							[] spawn
-							{
-								sleep 4;
-								_unit setVariable ["br_recentExplosiveHitAmmo", "", true];
-							};
-						};
-					};
 				};
 			case BR_ENUM_AMMO_ROUND_TYPE_SHOTGUN :
 				{
@@ -439,6 +425,8 @@ if (isNil "BRFR_Globals_defined") then
 	//####################################################
 	player addEventHandler ["HandleDamage", {_this call BR_DamageHandler} ];
 
+	br_hit_array = [];
+	
 	BR_DamageHandler =
 	{ 
 
@@ -454,131 +442,63 @@ if (isNil "BRFR_Globals_defined") then
 		];
 
 		private _unitHealthNow = damage _unit;
-		private _ignoreShot = false;
-
-		//diag_log format["[HIT_POINT] TIME:%8 		hitSel: %1 	engineProposedDmg: %2 	source: %3 	proj: %4 	hitPartIndex: %5 	inst: %6 	point: %7 	unit: %9", _selection, _engineProposedDamageValue, _source, _projectile, _hitPartIndex, _instigator, _hitPointCfgName, diag_tickTime, _unit];
-
-		// First impact?
-		if (diag_tickTime - br_lastHitEventTickTime > (BR_DMG_BULLET_SEPARATION_MIN_TIME + .005) ) then 
+		diag_log format["[HIT_POINT] TIME:%8 		hitSel: %1 	engineProposedDmg: %2 	source: %3 	proj: %4 	hitPartIndex: %5 	inst: %6 	point: %7 	unit: %9", _selection, _engineProposedDamageValue, _source, _projectile, _hitPartIndex, _instigator, _hitPointCfgName, diag_tickTime, _unit];
+		if ((_hitPartIndex == -1)  || (_hitPointCfgName == "Incapacitated") || (isNull _instigator)) exitWith {_unitHealthNow;};
+		//|| (_engineProposedDamageValue == _unitHealthNow)
+		if (diag_tickTime - br_lastHitEventTickTime > (BR_DMG_BULLET_SEPARATION_MIN_TIME) ) then
 		{
+			timer_start = diag_tickTime;
+
 			br_lastHitEventTickTime = diag_tickTime;
-			_unit setVariable [BR_PLAYER_HIT_EVENT_TRACKER, [_engineProposedDamageValue, _instigator, _this] ];
+			br_hit_array = [];
+			br_hit_array set  [_hitPartIndex, [_engineProposedDamageValue, _unit, _selection, _source, _projectile, _instigator]];
+			hit_loops = 0;
 
-			//diag_log "	**************************************************************";
-			//diag_log "	[BULLET DETECTED]";
-			//diag_log "	[BULLET DETECTED]";
-			//diag_log "	[BULLET DETECTED]";
-			//diag_log "	**************************************************************";
-
-			if (_hitPartIndex == -1) then 
-			{
-				if (_projectile in BR_AMMO_ROUND_TYPE_EXPLOSIVE_CFGTYPES) then 
-				{	
-					//diag_log "	**************************************************************";
-					//diag_log "	[SLOW EXPLOSIVE, ADDED TIME TO BULLETS]";
-					//diag_log "	**************************************************************";
-					br_lastHitEventTickTime = br_lastHitEventTickTime + .1;
-				};
-
-				if !(vehicle _unit isEqualTo _unit) then 
-				{
-					if (_projectile in BR_AMMO_ROUND_TYPE_762_CFGTYPES ||
-						_projectile in BR_AMMO_ROUND_TYPE_SNIPER_CFGTYPES) exitWith {_ignoreShot=true;};
-				};
-			};
-			if (_ignoreShot) exitWith { br_lastHitEventTickTime = 0; };
-
-			[_unit, _unitHealthNow] spawn
-			{
-				params ["_unit", "_unitHealthNow"];
-
-				//diag_log format["	[HIT_FIRST] Started at %1", diag_tickTime];
-
-				uiSleep (BR_DMG_BULLET_SEPARATION_MIN_TIME);
-
-				private _largestDamageEntry = _unit getVariable [BR_PLAYER_HIT_EVENT_TRACKER, []];
-
-				//diag_log "	**************************************************************";
-				//diag_log format["	[HIT_APPLY] Started at %1, with biggest hit %2", diag_tickTime, _largestDamageEntry];
-
-				if (count _largestDamageEntry > 0) then 
-				{
-					[_unit, _largestDamageEntry select 1, ((_largestDamageEntry select 2) select 5) call BR_DamageHandler_HitBoxLookup, (_largestDamageEntry select 2) select 4, _largestDamageEntry select 0, _unitHealthNow] call BR_DamageHandler_ApplyHitBoxDamage;
-				}
-				else
-				{
-					//diag_log "	[HIT_APPLY] ERROR ERROR ERROR ERROR ERROR ERROR. BR_PLAYER_HIT_EVENT_TRACKER was empty on APPLY!";
-				};
-			};
+			diag_log format["[FIRST_DETECTED_HITBOX] TIME:%8 		hitSel: %1 	engineProposedDmg: %2 	source: %3 	proj: %4 	hitPartIndex: %5 	inst: %6 	point: %7 	unit: %9", _selection, _engineProposedDamageValue, _source, _projectile, _hitPartIndex, _instigator, _hitPointCfgName, diag_tickTime, _unit];
 		}
 		else
 		{
-			//diag_log "	[2nd IMPACT DETECTED]";
-
-			if (_hitPartIndex == -1) then 
+			if (isNil {br_hit_array select _hitPartIndex} ) then
 			{
-				if (_projectile in BR_AMMO_ROUND_TYPE_EXPLOSIVE_CFGTYPES) then 
-				{	
-					//diag_log "	**************************************************************";
-					//diag_log "	[SLOW EXPLOSIVE, ADDED TIME TO BULLETS]";
-					//diag_log "	**************************************************************";
-					br_lastHitEventTickTime = br_lastHitEventTickTime + .1;
-				};
+				br_hit_array set [_hitPartIndex, [_engineProposedDamageValue, _unit, _selection, _source, _projectile, _instigator]];
+				hit_loops = hit_loops + 1;
+				diag_log format["[SECONDARY_HITBOXES] TIME:%8 		hitSel: %1 	engineProposedDmg: %2 	source: %3 	proj: %4 	hitPartIndex: %5 	inst: %6 	point: %7 	unit: %9", _selection, _engineProposedDamageValue, _source, _projectile, _hitPartIndex, _instigator, _hitPointCfgName, diag_tickTime, _unit];
 
-				if !(vehicle _unit isEqualTo _unit) then 
-				{
-					if (_projectile in BR_AMMO_ROUND_TYPE_762_CFGTYPES ||
-						_projectile in BR_AMMO_ROUND_TYPE_SNIPER_CFGTYPES) exitWith {_ignoreShot=true;};
-				};
+			}
+			else // just ignore any additional hits
+			{
+				if (true) exitWith {hit_loops = hit_loops + 1;};
 			};
-			if (_ignoreShot) exitWith { };
-
-			private _largestDamageEntry = _unit getVariable [BR_PLAYER_HIT_EVENT_TRACKER, []];
-
-			if (count _largestDamageEntry < 1) then 
-			{
-				//diag_log "ERROR ERROR ERROR ERROR ERROR ERROR : _largestDamageEntry is empty!";
-			} 
-			else
-			{
-				_biggestDmgValueSoFar = _largestDamageEntry select 0;
-				_instigatorSoFar = _largestDamageEntry select 1;
-
-				if (_biggestDmgValueSoFar < _engineProposedDamageValue) then 
-				{
-					_largestDamageEntry set [0, _engineProposedDamageValue];
-					_largestDamageEntry set [2, _this];
-				};
-				// Update instigator, since Bohemia can't do it right.
-				if (isNull _instigatorSoFar || 
-					(name _instigatorSoFar) isEqualTo "Error: No unit") then 
-				{
-					if !(isNull _instigator) then
-					{
-						if (isPlayer _instigator) then
-						{
-							if !((name _instigator) isEqualTo "Error: No unit") then
-							{
-								_largestDamageEntry set [1, _instigator];
-							};
-						};
-					}
-					else
-					{
-						if !(isNull _source) then 
-						{
-							if (isPlayer _source) then 
-							{
-								if !((name _source) isEqualTo "Error: No unit") then
-								{
-									_largestDamageEntry set [1, _source];
-								};
-							};
-						};
-					};
-				};
-			};
+			//	if ( ((br_hit_array select _hitPartIndex) select 0) > _engineProposedDamageValue ) then
+			//	{
+			//		systemChat format["Second hit detected"];
+			//		systemChat format["Old %1",((br_hit_array select _hitPartIndex) select 0)];
+			//		systemChat format["New %1",_engineProposedDamageValue];
+			//
+			//		br_hit_array = br_hit_array set [_hitPartIndex,objNull];
+			//		br_hit_array = br_hit_array - [objNull];
+			//		br_hit_array set [_hitPartIndex, [_engineProposedDamageValue, _unit, _selection, _source, _projectile, _instigator]];
+			//		
+			//	};
+			//};
+			//
 		};
+
+
+		if (hit_loops == 10) then //execute when we got data from every hitbox
+		{
+
+			br_hit_array sort false; //sort array with largest value at top 
+			_hitbox = ((br_hit_array select 0) select 2);
+			
+			systemChat format ["Target %1 hit in %2 with %3 (%4 damage)",_unit, _hitbox, _projectile, _engineProposedDamageValue];
+			//{
+			//systemChat format ["%1",_x];
+			//} forEach br_hit_array;
+			timer_end = diag_tickTime;
+			systemChat format ["Hit processing time = %1",timer_end - timer_start];
+
+		};		
 		_unitHealthNow
 	};
 	/////////////////////////////////////////////////////////////////////////////////////
