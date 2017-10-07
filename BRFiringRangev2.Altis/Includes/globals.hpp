@@ -259,7 +259,7 @@ if (isNil "BRFR_Globals_defined") then
 	{
 		private _hg = headgear _this; // .001ms - optimize
 		if (_hg in BR_GEAR_HELMET_TIER5) exitWith {.7};
-		if (_hg in BR_GEAR_HELMET_TIER4) exitWith {.45};
+		if (_hg in BR_GEAR_HELMET_TIER4) exitWith {.52};
 		if (_hg in BR_GEAR_HELMET_TIER3) exitWith {.4};
 		if (_hg in BR_GEAR_HELMET_TIER2) exitWith {.2};
 		0
@@ -290,13 +290,13 @@ if (isNil "BRFR_Globals_defined") then
 	BR_ENUM_AMMO_ROUND_TYPE_BASEDAMAGE_VALUES = [ 	// Must match ENUM above.  Value of hit against unarmored player, to CHEST.
 		0, 		// Explosive, NOT USED.
 		3,		// Sniper
-		.65, 		// 762
+		.88, 		// 762
 		.6,		// 655
 		.51,	// 556
 		.35,	// SMG
 		3,		// SHOTGUN @ short range, but must fall off
 		0,		// Environment, NOT USED.
-		1 	// Lee, CZ550 Hunting rifle
+		1.82 	// Lee, CZ550 Hunting rifle
 	];
 	BR_HEAD_DAMAGE_MULTIPLIER = 3;
 	BR_LEG_DAMAGE_MULTIPLIER = .5;
