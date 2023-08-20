@@ -905,7 +905,7 @@ if (isNil "BRFR_Globals_defined") then
 
 	G_MAGAZINE_OPTIONS = [
 		"20Rnd_556x45_UW_mag",
-		"FHQ_30Rnd_556x45_Stanag_Tracer_Ir",   					//30 Rnd STANAG Tracer IR				(FHQ M4 Pack)
+		// "FHQ_30Rnd_556x45_Stanag_Tracer_Ir",   					//30 Rnd STANAG Tracer IR				(FHQ M4 Pack)
 		"30Rnd_556x45_Stanag_Tracer_Red",   					//5.56mm 30rnd Tracer (Red) Mag
 		"30Rnd_556x45_Stanag_Tracer_Green",   					//5.56mm 30rnd Tracer (Green) Mag
 		"30Rnd_556x45_Stanag_Tracer_Yellow",   					//5.56mm 30rnd Tracer (Yellow) Mag
@@ -1046,9 +1046,9 @@ if (isNil "BRFR_Globals_defined") then
 
 	G_CAR_OPTIONS = [
 	"C_Van_01_box_F",
-	"BAF_Offroad_D",
+	"SUV_01_base_orange_F",
 	"C_Offroad_01_repair_F",
-	"beetle_bleufonce",
+	"br_beetle_hippie",
 	"C_Van_01_transport_F"
 		// "C_Hatchback_01_F",
 		// "C_Hatchback_01_sport_F",

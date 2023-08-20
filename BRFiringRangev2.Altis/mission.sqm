@@ -42,7 +42,6 @@ addons[]=
 	"A3_Structures_F_Mil_Flags",
 	"A3_Misc_F_Helpers",
 	"A3_Structures_F_Bootcamp_Civ_Camping",
-	"beetle_custom",
 	"A3_Structures_F_Ind_Cargo",
 	"br_client",
 	"A3_Characters_F",
@@ -132,8 +131,8 @@ class AddonsMetaData
 		};
 		class Item11
 		{
-			className="beetle_custom";
-			name="beetle_custom";
+			className="br_br_beetle_custom";
+			name="br_br_beetle_custom";
 		};
 		class Item12
 		{
@@ -1897,7 +1896,7 @@ class Mission
 				name="car";
 			};
 			id=92;
-			type="beetle_bleufonce";
+			type="br_beetle_blue";
 		};
 		class Item93
 		{
@@ -2333,7 +2332,7 @@ class Mission
 				name="car_1";
 			};
 			id=115;
-			type="beetle_violet";
+			type="br_beetle_hippie";
 		};
 		class Item116
 		{
@@ -2351,7 +2350,7 @@ class Mission
 				name="car_2";
 			};
 			id=116;
-			type="beetle_red";
+			type="br_beetle_red";
 		};
 		class Item117
 		{

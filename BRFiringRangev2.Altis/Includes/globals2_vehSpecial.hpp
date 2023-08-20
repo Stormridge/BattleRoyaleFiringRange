@@ -666,7 +666,7 @@ BR_DamageHandler =
 
 	G_MAGAZINE_OPTIONS = [
 		"20Rnd_556x45_UW_mag",
-		"FHQ_30Rnd_556x45_Stanag_Tracer_Ir",   					//30 Rnd STANAG Tracer IR				(FHQ M4 Pack)
+		// "FHQ_30Rnd_556x45_Stanag_Tracer_Ir",   					//30 Rnd STANAG Tracer IR				(FHQ M4 Pack)
 		"30Rnd_556x45_Stanag_Tracer_Red",   					//5.56mm 30rnd Tracer (Red) Mag
 		"30Rnd_556x45_Stanag_Tracer_Green",   					//5.56mm 30rnd Tracer (Green) Mag
 		"30Rnd_556x45_Stanag_Tracer_Yellow",   					//5.56mm 30rnd Tracer (Yellow) Mag
@@ -806,7 +806,7 @@ BR_DamageHandler =
 	];
 
 	G_CAR_OPTIONS = [
-		"beetle_bleufonce",
+		"br_beetle_hippie",
 		"C_Hatchback_01_F",
 		"C_Hatchback_01_sport_F",
 		"C_Offroad_01_F",
